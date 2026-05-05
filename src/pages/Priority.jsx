@@ -3,18 +3,28 @@ import Navbar from "../components/Navbar";
 import { fetchNotifications } from "../services/api";
 import "../App.css";
 
-export default function Home() {
+export default function Priority() {
   const [notifications, setNotifications] = useState([]);
-  const [type, setType] = useState("");
 
   useEffect(() => {
     loadData();
-  }, [type]);
+  }, []);
+
+  function getWeight(type) {
+    if (type === "Placement") return 3;
+    if (type === "Result") return 2;
+    return 1;
+  }
 
   async function loadData() {
     try {
-      const data = await fetchNotifications(type);
-      setNotifications(data);
+      const data = await fetchNotifications();
+      const sorted = data.sort((a, b) => {
+        let w = getWeight(b.Type) - getWeight(a.Type);
+        if (w !== 0) return w;
+        return new Date(b.Timestamp) - new Date(a.Timestamp);
+      });
+      setNotifications(sorted.slice(0, 10));
     } catch (e) {
       setNotifications([]);
     }
@@ -25,14 +35,7 @@ export default function Home() {
       <Navbar />
 
       <div className="container">
-        <h2>Stage 1 - Notifications</h2>
-
-        <select onChange={(e) => setType(e.target.value)}>
-          <option value="">All</option>
-          <option value="Event">Event</option>
-          <option value="Placement">Placement</option>
-          <option value="Result">Result</option>
-        </select>
+        <h2>Stage 2 - Priority Notifications</h2>
 
         {notifications && notifications.map((n) => (
           <div key={n.ID} className="card">
